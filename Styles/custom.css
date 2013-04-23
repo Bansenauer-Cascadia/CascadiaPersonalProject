@@ -1,0 +1,12 @@
+@charset "utf-8";
+/* CSS Document */
+#home {
+	text-align:center;
+}
+#recipes img {
+	height:90%;
+	width:90%;
+	margin-top:5px;
+	margin-left:5px;
+}
+

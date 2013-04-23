@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <title>Hello PhoneGap</title>
+<link href="jquery.mobile.theme-1.0.min.css" rel="stylesheet" type="text/css"/>
+<link href="jquery.mobile.structure-1.0.min.css" rel="stylesheet" type="text/css"/>
+<link href="Styles/custom.css" rel="stylesheet" type="text/css"/>
+<script src="jquery-1.6.4.min.js" type="text/javascript"></script>
+<script src="jquery.mobile-1.0.min.js" type="text/javascript"></script>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no;" />
+        <meta charset="utf-8">
+
+    </head>
+    <body onload="onBodyLoad()">
+
+<div data-role="page" id="home">
+	<div data-role="header">
+		<h1>Haffner Recipe Tracker - Home</h1>
+    </div>
+    <div data-role="content">
+    	<div data-role="controlgroup" data-type="horizontal">
+            <a href="#recipeBook" data-role="button">
+                <img src="Images/Cook_Book.png"/><br/>
+                View Recipe Book
+            </a>
+            <a href="#downloadRecipes" data-role="button">
+                <img src="Images/Download.png"/><br/>
+                Download New Recipes
+            </a>        
+        </div>
+    </div>
+    <div id="footer" data-role="footer" data-position="fixed" >
+    	<a href="#home" data-role="button" data-icon="home" data-iconpos="notext">Home</a>
+        <a href="#Settings" data-role="button" data-icon="gear" data-iconpos="notext">Settings</a>
+    </div>
+</div>
+
+<div data-role="page" id="downloadRecipes">
+	<div data-role="header">
+		<h1>Search Recipes</h1>
+		<a href="#home"data-icon="back"data-iconpos="notext">Home</a>
+    </div>
+    <div data-role="content">
+		<ul id="recipes"  data-role="listview" data-filter="true" data-filter-reveal="true" data-filter-placeholder="Search recipes..." data-inset="true" data-split-icon="plus">
+        	<li><a href="#">
+            	<img src="Images/NewRecipes/molten2.jpg"/>
+                <h2>Molten Lava Cake</h2>
+                <p>Some information on the molten lava cake that makes it sound good!</p></a>
+                <a href="#addRecipe" data-rel="dialog" data-transition="pop">Add Recipe</a>
+            </li>
+        	<li><a href="#">
+            	<img src="Images/NewRecipes/pancakes.jpg"/>
+                <h2>Pumpkin Spice Pancakes</h2>
+                <p>Some information on the panckes that makes them sound good!</p></a>     
+                <a href="#addRecipe" data-rel="dialog" data-transition="pop">Add Recipe</a>       	
+            </li>
+        	<li><a href="#">
+            	<img src="Images/NewRecipes/hotdogs.png"/>
+                <h2>Hoggies Famous Hotdogs</h2>
+                <p>Some information on the hotdogs that makes it sound good!</p></a> 
+                <a href="#addRecipe" data-rel="dialog" data-transition="pop">Add Recipe</a>           
+            </li>
+        	<li><a href="#">
+            	<img src="Images/NewRecipes/waffles.png"/>
+                <h2>Aunt Martha's Waffles</h2>
+                <p>Some information on the waffle that makes it sound good!</p></a> 
+                <a href="#addRecipe" data-rel="dialog" data-transition="pop">Add Recipe</a>           
+            </li>                                    
+        </ul>
+    </div>
+    <div id="footer" data-role="footer" data-position="fixed" >
+    	<a href="#home" data-role="button" data-icon="home" data-iconpos="notext">Home</a>
+        <a href="#Settings" data-role="button" data-icon="gear" data-iconpos="notext">Settings</a>
+    </div>
+</div>
+
+<div id="addRecipe" data-role="page">
+<div data-role="header">
+	<h1>Add Recipe</h1></div>
+<div data-role="content">
+	
+    <p>Are you sure you want to add tihs recipe to your book?</p>
+    <a href="#" data-role="button" data-inline="true">Yes</a>
+     <a href="#" data-role="button" data-inline="true" data-rel="back">No</a>
+     </div>
+</div>
+    </body>
+</html>
+
