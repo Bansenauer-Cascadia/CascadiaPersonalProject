@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <widget xmlns = "http://www.w3.org/ns/widgets"
     xmlns:gap = "http://phonegap.com/ns/1.0"
-    id        = "com.phonegap.example"
+    id        = "com.phonegap.recipeTracker "
     version   = "1.0.0">
 
 <name>Haffner Recipe Tracker</name>
@@ -10,9 +10,26 @@
 A recipe tracker application
 </description>
 
-<author href="https://example.com" email="you@example.com">
-Yecats
+<author href="https://sadlogic.com" email="yecats@outlook.com">
+SadLogic - Stacey Haffner
 </author>
-
+  <preference name="phonegap-version" value="2.7.0" />
+    <preference name="exit-on-suspend" value="true" />
+    <preference name="android-minSdkVersion" value="7" />
+    <preference name="android-maxSdkVersion" value="17" />
+    <preference name="load-url-timeout" value="30000" />
+    <!--preference name="orientation" value="portrait" /-->
+    <!-- Icon Info -->
+    <icon src="images/icons/icon.png" />
+    
+    <icon src="images/icons/icon.png" gap:platform="ios" width="57" height="57" />
+    <icon src="images/icons/icon-72.png" gap:platform="ios" width="72" height="72" />
+    <icon src="images/icons/icon-2x.png" gap:platform="ios" width="114" height="114" />
+    <icon src="images/icons/icon-72-2x.png" gap:platform="ios" width="144" height="144" />
+    
+    <icon src="images/icons/ldpi.png" gap:platform="android" gap:density="ldpi" />
+    <icon src="images/icons/mdpi.png" gap:platform="android" gap:density="mdpi" />
+    <icon src="images/icons/hdpi.png" gap:platform="android" gap:density="hdpi" />
+    <icon src="images/icons/xhdpi.png" gap:platform="android" gap:density="xhdpi" /> 
 
 </widget>

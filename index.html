@@ -1,88 +1,527 @@
 <!DOCTYPE html>
 <html>
     <head>
-    <title>Hello PhoneGap</title>
-<link href="jquery.mobile.theme-1.0.min.css" rel="stylesheet" type="text/css"/>
-<link href="jquery.mobile.structure-1.0.min.css" rel="stylesheet" type="text/css"/>
-<link href="Styles/custom.css" rel="stylesheet" type="text/css"/>
-<script src="jquery-1.6.4.min.js" type="text/javascript"></script>
-<script src="jquery.mobile-1.0.min.js" type="text/javascript"></script>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no;" />
-        <meta charset="utf-8">
+        <title>Haffner Recipe Tracker</title>
+        <link href="Content/jquery.mobile-1.3.1.min.css" rel="stylesheet" />
+        <link href="Styles/custom.css" rel="stylesheet" />
+        <link href="Styles/reset.css" rel="stylesheet" />
+        <script src="Scripts/jquery-2.0.2.js"></script>
+        <script src="Scripts/jquery.mobile-1.3.1.min.js"></script>
+        <script src="Scripts/cordova.ios.js"></script>
+        	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+            <script>
+                    document.addEventListener("deviceready", onDeviceReady, false);
+                //Perform actions on device ready
+                    var recipe;
+               
+                //create the login table
+                function onDeviceReady() {
+                    db = window.openDatabase("HaffnerRecipeTracker", "1.0", "Haffner Recipe Tracker", 100000);
+                    db.transaction(setUpDB, errorDB, successDB);
+                    db.transaction(queryRecipes, errorDB, successDB);
+                    $('#loginButton').click(function () {
+                        var username = $('#text-username').val();
 
+                        if ($('#text-username').val().toUpperCase() == "STACEY" && $('#password').val() == "pass") {
+                            console.log("login is good");
+                            db.transaction(validateLogin, errorDB, successDB);
+                            $('#username').text(username);
+                            $.mobile.changePage('#home');
+
+                        }
+                        else
+                            console.log("login is bad");
+                    });
+
+                }
+
+
+                function setUpDB(tx) {
+                    tx.executeSql('DROP TABLE IF EXISTS Login'); //this line is for testing the database
+                    tx.executeSql('DROP TABLE IF EXISTS RecipeBook'); //this line is for testing the database
+
+                    console.log("creating the first table");
+                    tx.executeSql('CREATE TABLE IF NOT EXISTS Login ( loginId unique, userName, Validated)');
+
+                    console.log("creating the second table");
+                    tx.executeSql('CREATE TABLE IF NOT EXISTS RecipeBook ( recipeBookId unique, RecipeName, Show)');
+
+                    //check for record
+                    tx.executeSql('SELECT * FROM Login', [], querySuccess, errorDB);
+                }
+
+                function queryRecipesBookShow(tx) {
+                    tx.executeSql('SELECT * FROM RecipeBook WHERE Show="True"', [], queryRecipesBookShowSuccess, errorDB);
+                }
+
+                function queryRecipes(tx) {
+                    tx.executeSql('SELECT * FROM RecipeBook', [], recipeQuerySuccess, errorDB);
+                }
+
+                function addRecipe(tx) {
+                    console.log('UPDATE RecipeBook SET Show="True" WHERE RecipeName="' + recipe + '"');
+                    tx.executeSql('UPDATE RecipeBook SET Show="True" WHERE RecipeName="' + recipe + '"');
+
+                }
+
+                function removeRecipe(tx) {
+                    console.log('UPDATE RecipeBook SET Show="False" WHERE RecipeName="' + recipe + '"');
+                    tx.executeSql('UPDATE RecipeBook SET Show="False" WHERE RecipeName="' + recipe + '"');
+                }
+
+                function validateLogin(tx) {
+                    tx.executeSql('UPDATE Login SET Validated="True" WHERE loginId=1');
+
+                }
+
+                function errorDB(err) {
+                    console.log("Error with SQL: " + err.code + ", message: " + err.message);
+                }
+
+                function successDB() {
+                    console.log('Database SetUp Successful');
+                }
+
+                function queryRecipesBookShowSuccess(tx, results) {
+                    var len = results.rows.length;
+                    console.log('Query Results are' + len);
+                    if (len == 0) 
+                        $('#recipeBookEmpty').show();
+                    else
+                        $('#recipeBookEmpty').hide();
+
+                }
+
+                function recipeQuerySuccess(tx, results) {
+                    var len = results.rows.length;
+                    var clickType;
+                    var handler = function () {
+                        recipe = $(this).data("recipe");
+                        flag = clickType;
+                        console.log(recipe);
+                        console.log(flag);
+
+                        if (flag == 'remove') {
+                            db.transaction(addRecipe, errorDB, successDB);
+                            $(this).attr('src', 'Images/Remove_Cook_Book.png');
+                            $('#confirmAddRecipe').popup();
+                            $('#confirmAddRecipe').popup('open');
+                        }
+                        else {
+                            db.transaction(removeRecipe, errorDB, successDB);
+                            $(this).attr('src', 'Images/Add_Cook_Book.png');
+                            $('#confirmRemoveRecipe').popup();
+                            $('#confirmRemoveRecipe').popup('open');
+                        }
+                        db.transaction(queryRecipes, errorDB, successDB);
+                    };
+
+                    for (var i = 0; i < len; i++) {
+                        if (results.rows.item(i).Show == "False") {
+                            $('#bl_' + results.rows.item(i).RecipeName).hide();
+                            $('[data-recipe="' + results.rows.item(i).RecipeName + '"]').attr('src', 'Images/add_Cook_Book.png');
+                            $('[data-recipe="' + results.rows.item(i).RecipeName + '"]').unbind('click').click(function () {
+                                recipe = $(this).data("recipe");
+                                console.log(recipe);
+                                db.transaction(addRecipe, errorDB, successDB);
+                                $(this).attr('src', 'Images/Remove_Cook_Book.png');
+                                $('#confirmAddRecipe').popup();
+                                $('#confirmAddRecipe').popup('open');
+                                db.transaction(queryRecipes, errorDB, successDB);
+                            });
+                        }
+                        else {
+                            $('#bl_' + results.rows.item(i).RecipeName).show();
+                            $('[data-recipe="' + results.rows.item(i).RecipeName + '"]').attr('src', 'Images/Remove_Cook_Book.png');
+                            $('[data-recipe="' + results.rows.item(i).RecipeName + '"]').unbind('click').click(function () {
+                                recipe = $(this).data("recipe");
+                                console.log(recipe);
+                                db.transaction(removeRecipe, errorDB, successDB);
+                                $(this).attr('src', 'Images/Add_Cook_Book.png');
+                                $('#confirmRemoveRecipe').popup();
+                                $('#confirmRemoveRecipe').popup('open');
+                                db.transaction(queryRecipes, errorDB, successDB);
+                            });
+                        }
+
+                    }
+                    db.transaction(queryRecipesBookShow, errorDB, queryRecipesBookShowSuccess);
+                }
+
+                function querySuccess(tx, results) {
+                    var len = results.rows.length;
+                    console.log("Login table: " + len + " rows found.");
+                    if (len == 0) {
+                        tx.executeSql('INSERT INTO Login (loginId, userName, Validated) VALUES (1, "Stacey", "false")');
+                            $.mobile.changePage('#login');
+                            tx.executeSql('INSERT INTO RecipeBook (recipeBookId, RecipeName, Show) VALUES (1, "MoltenLavaCake", "False")');
+                            tx.executeSql('INSERT INTO RecipeBook (recipeBookId, RecipeName, Show) VALUES (2, "PumpkinSpicePancakes", "False")');
+                            tx.executeSql('INSERT INTO RecipeBook (recipeBookId, RecipeName, Show) VALUES (3, "HoggiesFamousHotdogs", "False")');
+                            tx.executeSql('INSERT INTO RecipeBook (recipeBookId, RecipeName, Show) VALUES (4, "AuntMarthasWaffles", "False")');
+
+                    }
+                    else if (results.rows.item(0).Validated == "false") {
+                        $.mobile.changePage('#login');
+                    }
+                    else {
+                        tx.executeSql('SELECT userName FROM Login', [], queryUserNameSuccess, errorDB);
+                    }
+                }
+
+                function queryUserNameSuccess(tx, results) {
+                    console.log(results.rows.item(0).userName);
+                    $('#username').text(results.rows.item(0).userName);
+
+                }
+
+
+            </script>
     </head>
-    <body onload="onBodyLoad()">
+
+
+    <body>
 
 <div data-role="page" id="home">
 	<div data-role="header">
-		<h1>Haffner Recipe Tracker - Home</h1>
+		<h1>Recipe Tracker - Home</h1>
     </div>
     <div data-role="content">
+        <p>Welcome, <span id="username"></span>!</p>
     	<div data-role="controlgroup" data-type="horizontal">
-            <a href="#recipeBook" data-role="button">
+            <a href="#recipeBook" data-role="button" data-theme="reset" class="app-theme-none">
                 <img src="Images/Cook_Book.png"/><br/>
                 View Recipe Book
             </a>
-            <a href="#downloadRecipes" data-role="button">
+            <a href="#downloadRecipes" data-role="button" data-theme="reset" class="app-theme-none">
                 <img src="Images/Download.png"/><br/>
                 Download New Recipes
             </a>        
         </div>
     </div>
-    <div id="footer" data-role="footer" data-position="fixed" >
-    	<a href="#home" data-role="button" data-icon="home" data-iconpos="notext">Home</a>
-        <a href="#Settings" data-role="button" data-icon="gear" data-iconpos="notext">Settings</a>
+    <div data-role="footer" data-position="fixed" >
+    &#169; 2013 SadLogic
+    </div>
+</div>
+
+<div data-role="page" id="recipeBook">
+	<div data-role="header" class="head ui-icon-nodisc" >
+		<h1>Your Recipe Book</h1>
+		<a data-rel="back" data-role="button" data-theme="reset" class="app-theme-none" data-icon="Back-Arrow"></a>
+    </div>
+    <div data-role="content">
+        <p id="recipeBookEmpty">Your recipe book is empty! Return to the main menu to search for new recipes.</p>
+		<ul id="recipeBookList"  data-role="listview" data-inset="true" >
+        	<li data-icon="false" id="bl_MoltenLavaCake"><a href="#viewRecipeMoltenLavaCake">
+            	<img src="Images/NewRecipes/molten2.jpg"/>
+                <h2>Molten Lava Cake</h2>
+                <p>This gooey chocolaty wonder will have you craving more!</p></a>
+            </li>
+        	<li data-icon="false"id="bl_PumpkinSpicePancakes"><a href="#viewRecipePumpkinSpicePancakes">
+            	<img src="Images/NewRecipes/pancakes.jpg"/>
+                <h2>Pumpkin Spice Pancakes</h2>
+                <p>The pumpkin spice pancakes make every time of year feel like Thanksgiving!</p></a>     
+            </li>
+        	<li data-icon="false"id="bl_HoggiesFamousHotdogs"><a href="#viewRecipeHoggiesFamousHotdogs">
+            	<img src="Images/NewRecipes/hotdogs.png"/>
+                <h2>Hoggies Famous Hotdogs</h2>
+                <p>Crack open a beer and enjoy a hotdog like you've never had before!</p></a> 
+            </li>
+        	<li data-icon="false"id="bl_AuntMarthasWaffles"><a href="#viewRecipeAuntMarthasWaffles">
+            	<img src="Images/NewRecipes/waffles.png"/>
+                <h2>Aunt Martha's Waffles</h2>
+                <p>Pancakes with a wonderful mix of cinnamon will feel like Christmas!</p></a> 
+            </li>                                    
+        </ul>
+
+    </div>
+    <div data-role="footer" data-position="fixed" >
+    &#169; 2013 SadLogic
     </div>
 </div>
 
 <div data-role="page" id="downloadRecipes">
-	<div data-role="header">
+	<div data-role="header" class="head ui-icon-nodisc" >
 		<h1>Search Recipes</h1>
-		<a href="#home"data-icon="back"data-iconpos="notext">Home</a>
+		<a data-rel="back" data-role="button" data-theme="reset" class="app-theme-none" data-icon="Back-Arrow"></a>
     </div>
     <div data-role="content">
-		<ul id="recipes"  data-role="listview" data-filter="true" data-filter-reveal="true" data-filter-placeholder="Search recipes..." data-inset="true" data-split-icon="plus">
-        	<li><a href="#">
+		<ul id="recipes"  data-role="listview" data-filter="true" data-filter-reveal="true" data-filter-placeholder="Search recipes..." data-inset="true" >
+        	<li data-icon="false" id="Li1"><a href="#viewRecipeMoltenLavaCake">
             	<img src="Images/NewRecipes/molten2.jpg"/>
                 <h2>Molten Lava Cake</h2>
-                <p>Some information on the molten lava cake that makes it sound good!</p></a>
-                <a href="#addRecipe" data-rel="dialog" data-transition="pop">Add Recipe</a>
+                <p>This gooey chocolaty wonder will have you craving more!</p></a>
             </li>
-        	<li><a href="#">
+        	<li data-icon="false"id="Li2"><a href="#viewRecipePumpkinSpicePancakes">
             	<img src="Images/NewRecipes/pancakes.jpg"/>
                 <h2>Pumpkin Spice Pancakes</h2>
-                <p>Some information on the panckes that makes them sound good!</p></a>     
-                <a href="#addRecipe" data-rel="dialog" data-transition="pop">Add Recipe</a>       	
+                <p>The pumpkin spice pancakes make every time of year feel like Thanksgiving!</p></a>     
             </li>
-        	<li><a href="#">
+        	<li data-icon="false"id="Li3"><a href="#viewRecipeHoggiesFamousHotdogs">
             	<img src="Images/NewRecipes/hotdogs.png"/>
                 <h2>Hoggies Famous Hotdogs</h2>
-                <p>Some information on the hotdogs that makes it sound good!</p></a> 
-                <a href="#addRecipe" data-rel="dialog" data-transition="pop">Add Recipe</a>           
+                <p>Crack open a beer and enjoy a hotdog like you've never had before!</p></a> 
             </li>
-        	<li><a href="#">
+        	<li data-icon="false"id="Li4"><a href="#viewRecipeAuntMarthasWaffles">
             	<img src="Images/NewRecipes/waffles.png"/>
                 <h2>Aunt Martha's Waffles</h2>
-                <p>Some information on the waffle that makes it sound good!</p></a> 
-                <a href="#addRecipe" data-rel="dialog" data-transition="pop">Add Recipe</a>           
-            </li>                                    
+                <p>Pancakes with a wonderful mix of cinnamon will feel like Christmas!</p></a> 
+            </li>                              
         </ul>
-    </div>
-    <div id="footer" data-role="footer" data-position="fixed" >
-    	<a href="#home" data-role="button" data-icon="home" data-iconpos="notext">Home</a>
-        <a href="#Settings" data-role="button" data-icon="gear" data-iconpos="notext">Settings</a>
     </div>
 </div>
 
+<div id="viewRecipeMoltenLavaCake" data-role="page" >
+	<div data-role="header" class="head ui-icon-nodisc" >
+		<h1>Recipe Details</h1>
+		<a data-rel="back" data-role="button" data-theme="reset" class="app-theme-none" data-icon="Back-Arrow"></a>
+        <img class="addToCookBook"  src="Images/Add_Cook_Book.png" style="position:absolute; top:0px; right:15px; width:40px; height:40px;" data-recipe="MoltenLavaCake"/>
+    </div>
+
+    <div data-role="content">
+        <div style="display:block;">
+            <h1 class="title">Molten Lava Cake</h1>
+            
+        </div>
+        <div class="mainInfo" style="display:block;">
+            <div class="group1">
+            <img class="recipeImg" src="Images/NewRecipes/molten2.jpg" />
+            <div class="stats">
+                <p><span class="statLbl">Prep Time: </span><span id="prep">10</span> minutes</p>
+                <p><span class="statLbl">Cook Time: </span><span id="cook">45</span> minutes</p>
+                <p><span class="statLbl">Stand Time: </span><span id="stand">5</span> minutes</p>
+                <p><span class="statLbl">Yields: </span><span id="yield">4</span> servings</p>
+            </div>
+            </div>
+            <div class="group2">
+            <div class="ingredientList">
+                <h3>Ingredients</h3>
+                <ul class="ingList">
+                    <li>2 Egg Yolks</li>
+                    <li>2 Eggs</li>
+                    <li>3 Tablespoons White Sugar</li>
+                    <li>3 1/2 Ounces Dark Chocolate</li>
+                    <li>5 Tablespoons Butt</li>
+                    <li>4 Teaspoons Unsweetened Cocoa Powder</li>
+                    <li>3 Tablespoons Flour</li>
+                    <li>1/8 Teaspoon Vanilla Extract</li>
+                </ul>   
+            </div>
+                </div>
+            <div class="group3">
+            <div class="directions">
+                <h3>Directions</h3>
+                <ol class="directionList">
+                    <li>Generously butter the inside of 4 (5 1/2 ounce) ramekins. Place them in a casserole dish.</li>
+                    <li>Whisk together egg yolks, eggs, and sugar in a bowl until light, foamy, and lemon colored.</li>
+                    <li>Melt chocolate and butter in a microwave-safe bowl in 30-second intervals, stirring after each melting, 1 to 3 minutes.</li>
+                    <li>Melt chocolate and butter in a microwave-safe bowl in 30-second intervals, stirring after each melting, 1 to 3 minutes.</li>
+                </ol>
+            </div>
+        </div>
+            </div>
+    </div>
+
+    <div data-role="footer" data-position="fixed" >
+    &#169; 2013 SadLogic
+    </div>
+</div>
+<div id="viewRecipePumpkinSpicePancakes" data-role="page" >
+	<div data-role="header" class="head ui-icon-nodisc" >
+		<h1>Recipe Details</h1>
+		<a data-rel="back" data-role="button" data-theme="reset" class="app-theme-none" data-icon="Back-Arrow"></a>
+        <img class="addToCookBook" src="Images/Add_Cook_Book.png" style="position:absolute; top:0px; right:15px; width:40px; height:40px;"  data-recipe="PumpkinSpicePancakes"/>
+    </div>
+
+    <div data-role="content">
+        <div style="display:block;">
+            <h1 class="title">Pumpkin Spice Pancakes</h1>
+            
+        </div>
+        <div class="mainInfo" style="display:block;">
+            <div class="group1">
+            <img class="recipeImg" src="Images/NewRecipes/pancakes.jpg" />
+            <div class="stats">
+                <p><span class="statLbl">Prep Time: </span><span id="Span1">10</span> minutes</p>
+                <p><span class="statLbl">Cook Time: </span><span id="Span2">45</span> minutes</p>
+                <p><span class="statLbl">Stand Time: </span><span id="Span3">5</span> minutes</p>
+                <p><span class="statLbl">Yields: </span><span id="Span4">4</span> servings</p>
+            </div>
+            </div>
+            <div class="group2">
+            <div class="ingredientList">
+                <h3>Ingredients</h3>
+                <ul class="ingList">
+                    <li>2 Cups All-Purpose Flour</li>
+                    <li>2 Tablespoons Brown Sugar</li>
+                    <li>3 Tablespoons White Sugar</li>
+                    <li>1 Tablespoon White Sugar</li>
+                    <li>2 Teaspoons Baking Powder</li>
+                    <li>4 Teaspoons Unsweetened Cocoa Powder</li>
+                    <li>1 Teaspoon Baking Soda</li>
+                    <li>1/2 Teaspoon Salt</li>
+                    <li>1/2 Teaspoon Ground Ginger</li>
+                </ul>   
+            </div>
+                </div>
+            <div class="group3">
+            <div class="directions">
+                <h3>Directions</h3>
+                <ol class="directionList">
+                    <li>Combine flour, brown sugar, white sugar, baking powder, baking soda, and salt in a large mixing bowl, and whisk together for two minutes to aerate.</li>
+                    <li>In a separate bowl, combine pumpkin puree, cinnamon, ginger, allspice, egg, milk, 2 tablespoons of vegetable oil, lemon juice, and lemon zest. Mix in the flour mixture, and stir just until moistened. (Do not overmix.)</li>
+                    <li>Coat skillet with 1 teaspoon vegetable oil over medium heat.</li>
+                    <li>Pour batter into skillet 1/4 cup at a time, and cook the pancakes until golden brown, about 3 minutes on each side.</li>
+                </ol>
+            </div>
+        </div>
+            </div>
+    </div>
+
+    <div data-role="footer" data-position="fixed" >
+    &#169; 2013 SadLogic
+    </div>
+</div>
+<div id="viewRecipeHoggiesFamousHotdogs" data-role="page" >
+	<div data-role="header" class="head ui-icon-nodisc" >
+		<h1>Recipe Details</h1>
+		<a data-rel="back" data-role="button" data-theme="reset" class="app-theme-none" data-icon="Back-Arrow"></a>
+        <img class="addToCookBook" src="Images/Add_Cook_Book.png" style="position:absolute; top:0px; right:15px; width:40px; height:40px;" data-recipe="HoggiesFamousHotdogs" />
+    </div>
+
+    <div data-role="content">
+        <div style="display:block;">
+            <h1 class="title">Hoggies Famous Hotdogs</h1>
+            
+        </div>
+        <div class="mainInfo" style="display:block;">
+            <div class="group1">
+            <img class="recipeImg" src="Images/NewRecipes/hotdogs.png" />
+            <div class="stats">
+                <p><span class="statLbl">Prep Time: </span><span id="Span5">45</span> minutes</p>
+                <p><span class="statLbl">Cook Time: </span><span id="Span6">15</span> minutes</p>
+                <p><span class="statLbl">Stand Time: </span><span id="Span7">5</span> minutes</p>
+                <p><span class="statLbl">Yields: </span><span id="Span8">8</span> servings</p>
+            </div>
+            </div>
+            <div class="group2">
+            <div class="ingredientList">
+                <h3>Ingredients</h3>
+                <ul class="ingList">
+                    <li>8 hot dogs, chopped</li>
+                    <li>2/3 cup shredded Cheddar cheese</li>
+                    <li>3 tablespoons pickle relish</li>
+                    <li>2 teaspoons prepared mustard</li>
+                    <li>3 tablespoons ketchup</li>
+                    <li>2 teaspoons prepared mustard</li>
+                    <li>3 tablespoons chopped onion</li>
+                    <li>8 hot dog buns</li>
+                </ul>   
+            </div>
+                </div>
+            <div class="group3">
+            <div class="directions">
+                <h3>Directions</h3>
+                <ol class="directionList">
+                    <li>Preheat an oven to 325 degrees F (165 degrees C).</li>
+                    <li>Stir the hot dogs, Cheddar cheese, relish, ketchup, mustard, and onion together in a bowl; spoon into the hot dog buns. Wrap each sandwich in aluminum foil.</li>
+                    <li>Bake in the preheated oven until hot, about 20 minutes. Serve immediately.</li>
+                </ol>
+            </div>
+        </div>
+     </div>
+    </div>
+    <div data-role="footer" data-position="fixed" >
+    &#169; 2013 SadLogic
+    </div>
+</div>
+
+<div id="viewRecipeAuntMarthasWaffles" data-role="page">
+	<div data-role="header" class="head ui-icon-nodisc" >
+		<h1>Recipe Details</h1>
+		<a data-rel="back" data-role="button" data-theme="reset" class="app-theme-none" data-icon="Back-Arrow"></a>
+        <img class="addToCookBook" src="Images/Add_Cook_Book.png" data-recipe="AuntMarthasWaffles"/>
+    </div>
+
+    <div data-role="content">
+        <div style="display:block;">
+            <h1 class="title">Aunt Marthas Waffles</h1>
+            
+        </div>
+        <div class="mainInfo" style="display:block;">
+            <div class="group1">
+            <img class="recipeImg" src="Images/NewRecipes/waffles.png" />
+            <div class="stats">
+                <p><span class="statLbl">Prep Time: </span><span id="Span9">10</span> minutes</p>
+                <p><span class="statLbl">Cook Time: </span><span id="Span10">15</span> minutes</p>
+                <p><span class="statLbl">Stand Time: </span><span id="Span11">5</span> minutes</p>
+                <p><span class="statLbl">Yields: </span><span id="Span12">5</span> servings</p>
+            </div>
+            </div>
+            <div class="group2">
+            <div class="ingredientList">
+                <h3>Ingredients</h3>
+                <ul class="ingList">
+                    <li>2 egg yolks</li>
+                    <li>1 teaspoon vanilla extract</li>
+                    <li>1 cup buttermilk</li>
+                    <li>1 cup all-purpose flour</li>
+                    <li>1 1/2 teaspoons baking powder</li>
+                    <li>1/2 tablespoon white sugar</li>
+                    <li>1/4 teaspoon salt</li>
+                    <li>2 egg whites</li>
+                </ul>   
+            </div>
+                </div>
+            <div class="group3">
+            <div class="directions">
+                <h3>Directions</h3>
+                <ol class="directionList">
+                    <li>Preheat your waffle iron.</li>
+                    <li>In a medium bowl, whisk together the eggs, vanilla, buttermilk and butter until well blended. Combine the flour, baking powder, baking soda, sugar, salt and cinnamon; stir into the buttermilk mixture. In a separate bowl, whip the egg whites with an electric mixer until stiff. Fold into the batter.</li>
+                    <li>Spoon batter onto the hot waffle iron, close, and cook until golden brown. Waffles are usually done when the steam subsides.</li>
+                </ol>
+            </div>
+        </div>
+     </div>
+    </div>
+    <div data-role="footer" data-position="fixed" >
+    &#169; 2013 SadLogic
+    </div>
+</div>
+
+<div data-role="page" id="login">
+	<div data-role="header" class="head ui-icon-nodisc" >
+		<h1>Haffner Recipe Tracker</h1>
+    </div>
+    <div data-role="content">
+            <p>Please sign in so that we can manage your recipe book.</p>
+            <label for="text-basic">User Name:</label>
+            <input type="text" name="text-username" id="text-username" value="" required="required">
+            <label for="password">Password:</label>
+            <input type="password"  required="required" name="password" id="password" value="" autocomplete="off">
+            <a data-role="button" id="loginButton">Login</a>
+    </div>
+    <div data-role="footer" data-position="fixed" >
+    &#169; 2013 SadLogic
+    </div>
+</div>
+        <!-- pop up boxes -->
 <div id="addRecipe" data-role="page">
-<div data-role="header">
+<div data-role="header" class="head">
 	<h1>Add Recipe</h1></div>
 <div data-role="content">
 	
-    <p>Are you sure you want to add tihs recipe to your book?</p>
-    <a href="#" data-role="button" data-inline="true">Yes</a>
-     <a href="#" data-role="button" data-inline="true" data-rel="back">No</a>
+    <p>Are you sure you want to add this recipe to your book?</p>
+    <a href="#" data-role="button" data-inline="true" class="addRecipeButton">Yes</a>
+     <a href="#" data-role="button" data-inline="true" data-rel="back" class="addRecipeButton">No</a>
      </div>
+</div>
+
+<div data-role="popup" id="confirmAddRecipe">
+    <p>This recipe has been added to your book.</p>
+</div>
+        <div data-role="popup" id="confirmRemoveRecipe">
+    <p>This recipe has been removed from your book.</p>
 </div>
     </body>
 </html>
